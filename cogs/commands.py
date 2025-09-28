@@ -127,3 +127,5 @@ class CommandsCog(commands.Cog):
 
 async def setup(rift):
     await rift.add_cog(CommandsCog(rift))
+
+# hi
