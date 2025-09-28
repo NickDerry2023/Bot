@@ -3,7 +3,7 @@ import time
 import datetime
 import asyncio
 import pytz
-import datetime as dt
+from datetime import datetime
 from discord.ext import commands
 from utils.constants import RiftConstants
 from utils.embeds import (
@@ -44,7 +44,6 @@ class CommandsCog(commands.Cog):
         environment = constants.rift_environment_type() or "Unknown"
         version = await constants.get_mysql_version()
         command_run_time = datetime.now()
-        formatted_time = command_run_time.strftime("Today at %I:%M %p UTC")
 
 
         embed = AboutEmbed.create_info_embed(
@@ -58,7 +57,7 @@ class CommandsCog(commands.Cog):
             shards=shards,
             cluster=cluster,
             environment=environment,
-            command_run_time=formatted_time,
+            command_run_time=command_run_time,
             thumbnail_url="https://media.discordapp.net/attachments/1421354662967115928/1421382112833048606/RiftSquareLogo.png?ex=68d8d4bf&is=68d7833f&hm=0bf8d3177eb55c9cd883c1032da6a8d861afbac1157eb735aa15fc20a5b5eb5e&=&format=webp&quality=lossless",
         )
 
