@@ -7,7 +7,7 @@ from utils.utils import RiftContext
 from utils.embeds import UserInformationEmbed
 
 constants = RiftConstants()
-SocialPlatformType = Literal["Twitter", "Instagram", "Snapchat", "Youtube"]
+SocialPlatformType = Literal["Twitter", "Instagram", "Snapchat", "Youtube", "GitHub", "TikTok"]
 
 def _platform_url(platform: str, username: str) -> str:
     platform = platform.lower()
@@ -17,6 +17,10 @@ def _platform_url(platform: str, username: str) -> str:
         return f"https://snapchat.com/add/{username}"
     if platform == "youtube":
         return f"https://youtube.com/@{username}"
+    if platform == "github":
+        return f"https://github.com/{username}"
+    if platform == "tiktok":
+        return f"https://tiktok.com/@{username}"
     return f"https://x.com/{username}"
 
 
@@ -119,7 +123,7 @@ class ManagementCommandCog(commands.Cog):
                 return affected
             
 
-    @commands.hybrid_command(description="Show all information about a certain user.", aliases=["w", "ui"], with_app_command=True, extras={"category": "General"},)
+    @commands.hybrid_command(description="Show all information about a certain user.", aliases=["ui"], with_app_command=True, extras={"category": "General"},)
     async def whois(self, ctx, member: discord.User = None):
         member = member or ctx.author
 
