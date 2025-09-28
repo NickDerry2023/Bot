@@ -353,6 +353,14 @@ class UserInformationEmbed:
             if any(discord.utils.get(guild_member.roles, id=role_id)for role_id in staff_roles):
                 badges.append("> <:riftsystems:1421319259472003212> Rift Staff")
 
+            # Check for Notable role third
+
+            if any(
+                discord.utils.get(guild_member.roles, id=role_id)
+                for role_id in [1421279448631607357]
+            ):
+                badges.append("> <:Notable:1421908258129580115> Recognized User")
+
 
         except (discord.NotFound, discord.Forbidden):
             pass
