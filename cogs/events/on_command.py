@@ -3,7 +3,6 @@ import logging
 
 from discord.ext import commands
 from utils.embeds import OnCommandEmbed
-from utils.constants import statistics
 
 class OnCommand(commands.Cog):
     def __init__(self, rift):
