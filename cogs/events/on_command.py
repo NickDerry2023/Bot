@@ -11,15 +11,12 @@ class OnCommand(commands.Cog):
     @commands.Cog.listener()
     async def on_command(self, ctx: commands.Context):        
         log_channel_id = 1421575045813370890
-        channel = ctx.guild.get_channel(log_channel_id)
+        channel = self.rift.get_channel(log_channel_id)
     
         embed = OnCommandEmbed.create_on_command_embed(
+            ctx,
             command_name = ctx.command.qualified_name,
-            user = ctx.author,
-            guild = ctx.guild,
-            channel = ctx.channel,
             timestamp = ctx.message.created_at,
-            args = ctx.args,
         )
 
         await channel.send(embed=embed)

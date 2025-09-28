@@ -301,24 +301,31 @@ class OnGuildEmbed:
             color=discord.Color.from_str("#89ffbc")
         )
 
+        embed.set_thumbnail(url=f"{guild.icon.url}")
+
         embed.add_field(
-            name="Guild",
-            value=f"{guild.name} (ID: {guild.id})",
+            name="Guild Name", 
+            value=guild.name, 
             inline=True
         )
         embed.add_field(
-            name="Member Count",
-            value=str(guild.member_count),
+            name="Guild ID", 
+            value=str(guild.id), 
             inline=True
         )
         embed.add_field(
-            name="Owner Info",
-            value=f"{guild.owner} (ID: {guild.owner.id})" if guild.owner else "Owner not found",
+            name="Member Count", 
+            value=str(guild.member_count), 
             inline=True
         )
         embed.add_field(
-            name="Current Guild Count",
-            value=str(current_guild_count),
+            name="Owner Info", 
+            value=f"<@{guild.owner_id}> (``{guild.owner_id}``)",
+            inline=True
+        )
+        embed.add_field(
+            name="Current Guild Count", 
+            value=str(current_guild_count), 
             inline=True
         )
 
@@ -333,69 +340,57 @@ class OnGuildEmbed:
             color=discord.Color.from_str("#eb0909")
         )
 
+        embed.set_thumbnail(url=f"{guild.icon.url}")
+
         embed.add_field(
-            name="Guild",
-            value=f"{guild.name} (ID: {guild.id})",
-            inline=True
+            name="Guild Name",
+            value=guild.name,
+            inline=True,
+        )
+        embed.add_field(
+            name="Guild ID",
+            value=str(guild.id),
+            inline=True,
         )
         embed.add_field(
             name="Member Count",
             value=str(guild.member_count),
-            inline=True
+            inline=True,
         )
         embed.add_field(
             name="Owner Info",
-            value=f"{guild.owner} (ID: {guild.owner.id})" if guild.owner else "Owner not found",
-            inline=True
+            value=f"<@{guild.owner_id}> (``{guild.owner_id}``)",
+            inline=True,
         )
         embed.add_field(
             name="Current Guild Count",
             value=str(current_guild_count),
-            inline=True
+            inline=True,
         )
 
         return embed
     
 class OnCommandEmbed:
     @staticmethod
-    def create_command_embed(
+    def create_on_command_embed(
+        ctx,
         command_name: str,
-        user,
-        guild,
-        channel,
         timestamp: datetime,
-        args: str = "None",
     ):
         embed = discord.Embed(
-            title=f"Command Used: {command_name}",
+            title=f"Command Ran",
             color=discord.Color.from_str("#89ffbc"),
             timestamp=timestamp
         )
 
-        embed.add_field(
-            name="User",
-            value=f"{user} (ID: {user.id})",
-            inline=True
-        )
-        embed.add_field(
-            name="Guild",
-            value=f"{guild.name} (ID: {guild.id})" if guild else "DM (No Guild)",
-            inline=True
-        )
+        embed.add_field(name="Guild Name", value=ctx.guild.name, inline=True)
+        embed.add_field(name="Guild ID", value=str(ctx.guild.id), inline=True)
         embed.add_field(
             name="Owner Info",
-            value=f"{guild.owner} (ID: {guild.owner.id})" if guild and guild.owner else "Owner not found",
-            inline=True
+            value=f"<@{ctx.guild.owner_id}> (``{ctx.guild.owner_id}``)",
+            inline=False,
         )
-        embed.add_field(
-            name="Channel",
-            value=f"{channel} (ID: {channel.id})",
-            inline=True
-        )
-        embed.add_field(
-            name="Arguments",
-            value=args,
-            inline=False
-        )
+        embed.add_field(name="User", value=f"<@{ctx.author.id}>", inline=False)
+        embed.add_field(name="Command", value=ctx.command.qualified_name.replace(" ", "_").lower(), inline=False)
 
         return embed
