@@ -3,9 +3,7 @@ import aiomysql
 from discord.ui import Modal, TextInput
 from utils.constants import RiftConstants
 
-
 constants = RiftConstants()
-
 
 # Custom interation handler for the embed system that I made to allow a ctx.send_success system
 # to exist for interactions as well.
@@ -18,7 +16,7 @@ class InteractionContextAdapter:
         self.bot = bot
 
 
-    async def send_success(self, message: str, ephemeral=True):
+    async def send_success(self, message: str, ephemeral=False):
         
         embed = discord.Embed(
             description=f"{self.bot.success} {message}",
@@ -32,7 +30,7 @@ class InteractionContextAdapter:
             await self.interaction.followup.send(embed=embed, ephemeral=ephemeral)
 
 
-    async def send_error(self, message: str, ephemeral=True):
+    async def send_error(self, message: str, ephemeral=False):
         embed = discord.Embed(
             description=f"{self.bot.error} {message}",
             color=self.bot.base_color,
@@ -41,7 +39,6 @@ class InteractionContextAdapter:
             await self.interaction.response.send_message(embed=embed, ephemeral=ephemeral)
         except discord.errors.InteractionAlreadyResponded:
             await self.interaction.followup.send(embed=embed, ephemeral=ephemeral)
-
 
 
 # This is the entire blacklsit submission logic to check information and send it to the MySQL database. 
@@ -97,7 +94,6 @@ async def process_blacklist_db(data: dict):
         raise
 
 
-
 # This is the rendering of the blacklist submission modal. We handle DB operations sepetealy to prevent
 # timing out and getting a response for discord within the 3 second time limit.
 
@@ -132,7 +128,7 @@ class BlacklistModal(discord.ui.Modal):
         
         try:
             case_id = await process_blacklist_db(data)
-            await ctx.send_success(f"The user {self.entity_display} has been **blacklisted** from Rift because {self.description_input.value}")
+            await ctx.send_success(f"The user {self.entity_display} has been **blacklisted** from Rift Systems.")
        
        
         except Exception as e:

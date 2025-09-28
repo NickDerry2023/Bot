@@ -8,6 +8,7 @@ class Tasks(commands.Cog):
         self.rift = rift
         self.change_status.start()
 
+
     @tasks.loop(seconds=30)
     async def change_status(self):
         guild_count = len(self.rift.guilds)

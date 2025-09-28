@@ -11,6 +11,7 @@ class OnGuildRemove(commands.Cog):
     def __init__(self, rift):
         self.rift = rift
 
+
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
         if constants.rift_environment_type() == "Development":
@@ -24,6 +25,7 @@ class OnGuildRemove(commands.Cog):
         )
 
         await channel.send(embed=embed)
+
 
 async def setup(rift):
     await rift.add_cog(OnGuildRemove(rift))

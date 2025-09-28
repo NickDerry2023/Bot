@@ -66,7 +66,6 @@ class RiftConstants:
         return user_id in self.bypassed_users
 
 
-
     async def get_prefix(self, guild_id: int) -> str:
         if not self.pool:
             await self.connect()
@@ -78,7 +77,6 @@ class RiftConstants:
                 )
                 row = await cur.fetchone()
                 return row["prefix"] if row else "!"
-
 
 
     async def get_support_roles(self, guild_id: int) -> list[int]:
@@ -96,7 +94,6 @@ class RiftConstants:
                 return []
 
 
-
     async def get_transcript_channel(self, guild_id: int) -> int | None:
         if not self.pool:
             await self.connect()
@@ -108,7 +105,6 @@ class RiftConstants:
                 )
                 row = await cur.fetchone()
                 return int(row["transcript_channel"]) if row and row["transcript_channel"] else None
-
 
 
     async def get_ticket_categories(self, guild_id: int) -> list[int]:
@@ -124,7 +120,6 @@ class RiftConstants:
                 if row and row["ticket_categories"]:
                     return [int(c.strip()) for c in row["ticket_categories"].split(",")]
                 return []
-            
             
             
     async def get_mysql_version(self) -> str:
@@ -172,7 +167,6 @@ class RiftConstants:
         return os.getenv("ENVIRONMENT", "Development")
 
 
-
     def __init__(self):
         self.pool: aiomysql.Pool | None = None
         self.bypassed_users: list[int] = []
@@ -182,13 +176,10 @@ class RiftConstants:
         self.blacklisted_guild_ids: set[int] = set()
 
 
-
     async def fetch_blacklisted_users(self):
-        
         
         if not self.pool:
             await self.connect()
-            
             
         try:
             async with self.pool.acquire() as conn:
@@ -214,7 +205,6 @@ class RiftConstants:
 
     async def fetch_blacklisted_guilds(self):
         
-        
         if not self.pool:
             await self.connect()
             
@@ -237,14 +227,12 @@ class RiftConstants:
         await self.fetch_blacklisted_guilds()
 
 
-
 class TableProxy:
     def __init__(self, table: str):
         self.table = table
 
     def __repr__(self):
         return f"<TableProxy table={self.table}>"
-
 
 
 prefixes = TableProxy("server_config")

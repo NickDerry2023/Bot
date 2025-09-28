@@ -1,11 +1,11 @@
 import discord
 import platform
-from datetime import datetime
+from datetime import datetime, timezone
 from discord import Interaction
 from discord.ext import commands
 from discord.ui import View, Button, Modal, TextInput
 from utils.constants import RiftConstants
-from typing import List
+from typing import List, Optional
 
 
 constants = RiftConstants()
@@ -18,13 +18,11 @@ class SuccessEmbed(discord.Embed):
         )
 
 
-
 class ErrorEmbed(discord.Embed):
     def __init__(self, title: str, description: str, **kwargs):
         super().__init__(
             title=title, description=description, color=discord.Color.red(), **kwargs
         )
-
 
 
 class MissingArgsEmbed(discord.Embed):
@@ -36,7 +34,6 @@ class MissingArgsEmbed(discord.Embed):
         )
 
 
-
 class BadArgumentEmbed(discord.Embed):
     def __init__(self):
         super().__init__(
@@ -44,7 +41,6 @@ class BadArgumentEmbed(discord.Embed):
             description="<:RiftFail:1421378112339312742> You provided an incorrect argument type.",
             color=discord.Color.red(),
         )
-
 
 
 class ForbiddenEmbed(discord.Embed):
@@ -56,7 +52,6 @@ class ForbiddenEmbed(discord.Embed):
         )
 
 
-
 class MissingPermissionsEmbed(discord.Embed):
     def __init__(self):
         super().__init__(
@@ -64,7 +59,6 @@ class MissingPermissionsEmbed(discord.Embed):
             description="<:RiftFail:1421378112339312742> You don't have the required permissions to run this command.",
             color=discord.Color.red(),
         )
-
 
 
 class UserErrorEmbed(discord.Embed):
@@ -76,6 +70,28 @@ class UserErrorEmbed(discord.Embed):
         )
         
 
+class DeveloperErrorEmbed(discord.Embed):
+    def __init__(self, error, ctx, error_id):
+        super().__init__(
+            title="Something went wrong!",
+            description=f"{error}",
+            color=discord.Color.red(),
+        )
+        self.add_field(name="Error ID", value=f"__{error_id}__", inline=True)
+        self.add_field(
+            name="User", value=f"{ctx.author.mention}(**{ctx.author.id}**)", inline=True
+        )
+        self.add_field(
+            name="Server Info",
+            value=f"{ctx.guild.name}(**{ctx.guild.id}**)",
+            inline=True,
+        )
+        self.add_field(
+            name="Command",
+            value=f"Name: {ctx.command.qualified_name}\nArgs: {ctx.command.params}",
+            inline=True,
+        )
+        
 
 class AboutEmbed:
     @staticmethod
@@ -135,7 +151,6 @@ class AboutEmbed:
         return embed
 
 
-
 class AboutWithButtons:
     @staticmethod
     def create_view():
@@ -161,7 +176,6 @@ class AboutWithButtons:
         return view
 
 
-
 class HelpCenterEmbed(discord.Embed):
     def __init__(self, description: str):
         super().__init__(
@@ -169,56 +183,6 @@ class HelpCenterEmbed(discord.Embed):
             description=description,
             color=constants.rift_embed_color_setup(),
         )
-
-
-
-class NicknameSuccessEmbed(discord.Embed):
-    def __init__(self, user, previous_name, new_name):
-        super().__init__(
-            title="Nickname Changed Successfully",
-            description=(
-                f"> **User**: {user.mention}\n"
-                f"> **Previous Name**: ``{previous_name}``\n"
-                f"> **New Name**: ``{new_name}``"
-            ),
-            color=discord.Color.green(),
-        )
-
-
-
-class RoleSuccessEmbed(discord.Embed):
-    def __init__(self, title: str, description: str):
-        super().__init__(
-            title=title, description=description, color=discord.Color.green()
-        )
-
-
-
-class ChannelSuccessEmbed(discord.Embed):
-    def __init__(self, title: str, description: str):
-        super().__init__(
-            title=title, description=description, color=discord.Color.green()
-        )
-
-
-class SearchResultEmbed(discord.Embed):
-    def __init__(
-        self,
-        title: str,
-        description: str,
-        case_number: int,
-        collection: str,
-        details: str,
-    ):
-        super().__init__(
-            title=title,
-            description=description,
-            color=constants.rift_embed_color_setup(),
-        )
-        self.add_field(name="Case Number", value=case_number, inline=False)
-        self.add_field(name="Collection", value=collection, inline=False)
-        self.add_field(name="Details", value=details, inline=False)
-
 
 
 class PingCommandEmbed:
@@ -290,107 +254,256 @@ class PrefixSuccessEmbedNoneChanged(discord.Embed):
             color=discord.Color.green(),
         )
 
+
 class OnGuildEmbed:
     @staticmethod
-    def create_guild_join_embed(
-        guild,
-        current_guild_count,
-    ):
-        embed = discord.Embed(
-            title="Joined a New Guild",
-            color=discord.Color.from_str("#89ffbc")
+    def _make(
+        *,
+        title: str,
+        color: str | discord.Color,
+        guild: discord.Guild,
+        current_guild_count: int,
+        timestamp: Optional[datetime] = None,
+    ) -> discord.Embed:
+        embed_color = color if isinstance(color, discord.Color) else discord.Color.from_str(color)
+
+        e = discord.Embed(
+            title=title,
+            color=embed_color,
+            timestamp=timestamp or datetime.now(timezone.utc),
         )
 
-        embed.set_thumbnail(url=f"{guild.icon.url}")
+        if getattr(guild, "icon", None):
+            e.set_thumbnail(url=guild.icon.url)
 
-        embed.add_field(
-            name="Guild Name", 
-            value=guild.name, 
-            inline=True
-        )
-        embed.add_field(
-            name="Guild ID", 
-            value=str(guild.id), 
-            inline=True
-        )
-        embed.add_field(
-            name="Member Count", 
-            value=str(guild.member_count), 
-            inline=True
-        )
-        embed.add_field(
-            name="Owner Info", 
-            value=f"<@{guild.owner_id}> (``{guild.owner_id}``)",
-            inline=True
-        )
-        embed.add_field(
-            name="Current Guild Count", 
-            value=str(current_guild_count), 
-            inline=True
+        info_value = (
+            f"> - **Guild Name:** {guild.name}\n"
+            f"> - **Guild ID:** `{guild.id}`\n"
+            f"> - **Owner:** <@{guild.owner_id}> (`{guild.owner_id}`)\n"
+            f"> - **Member Count:** `{guild.member_count}`\n"
+            f"> - **Current Guild Count:** `{current_guild_count}`"
         )
 
-        return embed
-
-    def create_guild_remove_embed(
-        guild,
-        current_guild_count,
-    ):
-        embed = discord.Embed(
-            title="Removed From a Guild",
-            color=discord.Color.from_str("#eb0909")
-        )
-
-        embed.set_thumbnail(url=f"{guild.icon.url}")
-
-        embed.add_field(
-            name="Guild Name",
-            value=guild.name,
-            inline=True,
-        )
-        embed.add_field(
-            name="Guild ID",
-            value=str(guild.id),
-            inline=True,
-        )
-        embed.add_field(
-            name="Member Count",
-            value=str(guild.member_count),
-            inline=True,
-        )
-        embed.add_field(
-            name="Owner Info",
-            value=f"<@{guild.owner_id}> (``{guild.owner_id}``)",
-            inline=True,
-        )
-        embed.add_field(
-            name="Current Guild Count",
-            value=str(current_guild_count),
+        e.add_field(
+            name="Guild Information",
+            value=info_value,
             inline=True,
         )
 
-        return embed
-    
-class OnCommandEmbed:
+        return e
+
+
     @staticmethod
-    def create_on_command_embed(
-        ctx,
-        command_name: str,
-        timestamp: datetime,
-    ):
-        embed = discord.Embed(
-            title=f"Command Ran",
+    def create_guild_join_embed(
+        guild: discord.Guild,
+        current_guild_count: int,
+        timestamp: Optional[datetime] = None,
+    ) -> discord.Embed:
+        return OnGuildEmbed._make(
+            title="Joined a New Guild",
+            color="#89ffbc",
+            guild=guild,
+            current_guild_count=current_guild_count,
+            timestamp=timestamp,
+        )
+
+
+    @staticmethod
+    def create_guild_remove_embed(
+        guild: discord.Guild,
+        current_guild_count: int,
+        timestamp: Optional[datetime] = None,
+    ) -> discord.Embed:
+        return OnGuildEmbed._make(
+            title="Removed From a Guild",
+            color="#FFABAB",
+            guild=guild,
+            current_guild_count=current_guild_count,
+            timestamp=timestamp,
+        )
+    
+    
+class UserInformationEmbed:
+    def __init__(self, member, constants, rift):
+        self.member = member
+        self.constants = constants
+        self.rift = rift
+
+
+    async def fetch_guild_specific_badges(self):
+        badges = []
+        try:
+
+            guild = self.rift.get_guild(1420889056174411898)
+            guild_member = await guild.fetch_member(self.member.id)
+
+            staff_roles = [1421718175338205256]  # Staff Role
+
+            # Check for Rift Team role first
+            
+            if any(
+                discord.utils.get(guild_member.roles, id=role_id)
+                for role_id in [1421267029960167614]
+            ):
+                badges.append("> <:riftsystems:1421319259472003212> Rift Team")
+
+            # Check for staff roles second
+            
+            if any(discord.utils.get(guild_member.roles, id=role_id)for role_id in staff_roles):
+                badges.append("> <:riftsystems:1421319259472003212> Rift Staff")
+
+
+        except (discord.NotFound, discord.Forbidden):
+            pass
+        except Exception as e:
+            print(f"Error fetching guild-specific badges: {e}")
+
+        return badges
+
+
+    def get_user_badges(self):
+        flags = self.member.public_flags
+        badges = []
+
+        badge_map = {
+            "hypesquad_bravery": "> <:sbHypeSquadBrave:1421716745399566346> HypeSquad Bravery",
+            "hypesquad_brilliance": "> <:sbHypeSquadBrilliance:1421716796234534942> HypeSquad Brilliance",
+            "hypesquad_balance": "> <:sbHypeSquadBalance:1421716836658970716> HypeSquad Balance",
+            "verified_bot": "> <:sbVerified:1421717217703104603> Verified Bot",
+            "early_supporter": "> <:staff:1421718058019323978> Early Supporter",
+            "active_developer": "> <:verified:1421716168074330273> Active Developer",
+        }
+
+        for flag, badge in badge_map.items():
+            if getattr(flags, flag, False):
+                badges.append(badge)
+
+        return badges
+
+
+    def get_permissions(self):
+        permissions = [
+            perm.replace("_", " ").title()
+            for perm, value in self.member.guild_permissions
+            if value
+        ]
+        return ", ".join(permissions[:10]) or "No Permissions"
+
+
+    async def create_embed(self):
+        try:
+
+            # Basic user information
+
+            user_mention = self.member.mention
+            display_name = self.member.display_name
+            user_id = self.member.id
+            account_created = f"<t:{int(self.member.created_at.timestamp())}:F>"
+            joined_server = (
+                f"<t:{int(self.member.joined_at.timestamp())}:F>"
+                if self.member.joined_at
+                else "N/A"
+            )
+
+            roles = sorted(
+                [role for role in self.member.roles if role.name != "@everyone"],
+                key=lambda role: role.position,
+                reverse=True,
+            )[
+                :10
+            ]
+
+            role_mentions = [role.mention for role in roles]
+            role_count = len(role_mentions)
+
+            # Fetch badges and permissions
+            
+            guild_badges = await self.fetch_guild_specific_badges()
+            discord_badges = self.get_user_badges()
+            badges = guild_badges + discord_badges
+            permissions_display = self.get_permissions()
+
+            # Create embed
+
+            embed = discord.Embed(
+                title=f"User Info - {display_name}",
+                color=self.constants.rift_embed_color_setup(),
+                timestamp=datetime.utcnow(),
+            )
+
+            embed.add_field(
+                name="**User Information**",
+                value=(
+                    f"> - **Mention:** {user_mention}\n"
+                    f"> - **Display Name:** {display_name}\n"
+                    f"> - **User ID:** {user_id}\n"
+                    f"> - **Account Created:** {account_created}\n"
+                    f"> - **Joined Server:** {joined_server}"
+                ),
+                inline=False,
+            )
+
+            embed.set_thumbnail(url=self.member.display_avatar.url)
+
+            # Add badges and roles
+
+            embed.add_field(
+                name="Badges",
+                value="\n".join(badges) if badges else "No badges",
+                inline=False,
+            )
+
+            embed.add_field(
+                name=f"Roles ({role_count})",
+                value=", ".join(role_mentions) if role_mentions else "No Roles",
+                inline=False,
+            )
+
+            embed.add_field(name="Permissions", value=permissions_display, inline=False)
+
+            if self.member.bot:
+                embed.set_footer(text="This user is a bot.")
+
+            return embed
+
+
+        except Exception as e:
+            print(f"Error generating embed: {e}")
+            return None
+        
+        
+class RobloxUserEmbed(discord.Embed):
+    @staticmethod
+    def create(
+        *,
+        user_id: int,
+        username: str,
+        created: str,
+        friends: int,
+        followers: int,
+        following: int,
+        groups: int,
+        avatar_url: str | None = None,
+    ) -> discord.Embed:
+        e = discord.Embed(
+            title=username,
             color=discord.Color.from_str("#89ffbc"),
-            timestamp=timestamp
         )
+        if avatar_url:
+            e.set_thumbnail(url=avatar_url)
 
-        embed.add_field(name="Guild Name", value=ctx.guild.name, inline=True)
-        embed.add_field(name="Guild ID", value=str(ctx.guild.id), inline=True)
-        embed.add_field(
-            name="Owner Info",
-            value=f"<@{ctx.guild.owner_id}> (``{ctx.guild.owner_id}``)",
-            inline=False,
+        info_value = (
+            f"> - **Username:** {username}\n"
+            f"> - **User ID:** `{user_id}`\n"
+            f"> - **Created:** {created}\n"
+            f"> - **Friends:** `{friends}`\n"
+            f"> - **Followers:** `{followers}`\n"
+            f"> - **Following:** `{following}`\n"
+            f"> - **Groups:** `{groups}`"
         )
-        embed.add_field(name="User", value=f"<@{ctx.author.id}>", inline=False)
-        embed.add_field(name="Command", value=ctx.command.qualified_name.replace(" ", "_").lower(), inline=False)
-
-        return embed
+        e.add_field(
+            name="Roblox Information",
+            value=info_value,
+            inline=True,
+        )
+        return e

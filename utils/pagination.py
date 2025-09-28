@@ -61,7 +61,7 @@ class PingPaginationView(discord.ui.View):
     @discord.ui.button(
         emoji="<:settings:1421385210167033979>",
         label="Network",
-        style=discord.ButtonStyle.blurple,
+        style=discord.ButtonStyle.green,
         disabled=True,
     )
     async def page_button(
@@ -82,7 +82,6 @@ class PingPaginationView(discord.ui.View):
             if self.page == self.max_page:
                 self.next_button.disabled = True
             await self.update_message(interaction)
-
 
 
 class ReminderPaginationView(discord.ui.View):
@@ -145,7 +144,6 @@ class ReminderPaginationView(discord.ui.View):
         if self.page < self.max_page - 1:
             self.page += 1
             await self.update_message(interaction)
-
 
 
 class GuildPaginator(discord.ui.View):

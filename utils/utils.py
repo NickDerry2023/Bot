@@ -4,9 +4,7 @@ from utils.constants import RiftConstants
 import os
 from dotenv import load_dotenv
 
-
 constants = RiftConstants()
-
 
 async def get_prefix(rift, message):
     if not message.guild:
@@ -19,7 +17,6 @@ async def get_prefix(rift, message):
         prefix = os.getenv("PREFIX", "!")
 
     return commands.when_mentioned_or(prefix)(rift, message)
-
 
 
 class RiftContext(commands.Context):

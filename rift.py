@@ -20,7 +20,6 @@ from cogwatch import watch
 
 constants = RiftConstants()
 
-
 class Rift(commands.AutoShardedBot):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -58,29 +57,7 @@ class Rift(commands.AutoShardedBot):
 
 
         if constants.rift_environment_type() == "Development":
-            for guild in self.guilds:
-
-                id = guild.id
-                owner = guild.get_member(guild.owner_id)
-                is_dev_guild = id in self.beta_guilds
-                channel = self.get_guild(self.beta_guilds[0]).get_channel(
-                    1421379275642372159
-                )
-
-                # Check if owner is None
-                if owner is None:
-                    owner_info = "Owner not found"
-                else:
-                    owner_info = f"{owner}({owner.id})"
-
-                embed = discord.Embed(
-                    title="Beta bot added to a guild",
-                    description=f"**NAME:** `{guild.name}`\n**ID:** `{id}`\n**OWNER:** `{owner_info}`\n**IS_DEV_GUILD:** `{is_dev_guild}`",
-                )
-
-                if not is_dev_guild:
-                    await guild.leave()
-                    await channel.send(embed=embed)
+            pass
 
 
         else:
@@ -98,7 +75,6 @@ class Rift(commands.AutoShardedBot):
 
 
         print(f"{self.user.name} is ready!")
-
 
 
     async def is_owner(self, user: discord.User):
@@ -124,7 +100,6 @@ class Rift(commands.AutoShardedBot):
         return False
 
 
-
     async def setup_hook(self) -> None:
         await constants.connect()
 
@@ -136,7 +111,6 @@ class Rift(commands.AutoShardedBot):
                     await self.load_extension(f"cogs.{cog_module}")
 
         print("All cogs loaded successfully!")
-
 
 
     async def refresh_blacklist_periodically(self):
@@ -167,7 +141,6 @@ async def before_invoke(ctx):
     if ctx.author.id in constants.bypassed_users:
         return
     await global_blacklist_check(ctx)
-
 
 
 async def global_blacklist_check(ctx):
@@ -203,7 +176,6 @@ async def global_blacklist_check(ctx):
         raise commands.NoPrivateMessage("This command cannot be used in private messages.")
 
     return True
-
 
 
 def run():

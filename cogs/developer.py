@@ -9,9 +9,7 @@ from utils.utils import RiftContext
 from utils.modals import BlacklistModal
 from utils.pagination import GuildPaginator
 
-
 constants = RiftConstants()
-
 
 async def is_panel_admin(discord_id: int) -> bool:
     
@@ -35,11 +33,9 @@ class AdminCommandsCog(commands.Cog):
         self.rift = rift
 
 
-
     @commands.command()
     async def checkguild(self, ctx: RiftContext, guild_id: int):
         await ctx.send_success(f"Checkguild command received for ID: `{guild_id}`")
-
 
 
     @commands.command()
@@ -49,16 +45,13 @@ class AdminCommandsCog(commands.Cog):
         await view.send()
 
 
-
     @app_commands.command(name="blacklist")
     async def blacklist(self, interaction: discord.Interaction, entity_id: str, blacklist_type: str):
         if not constants.pool:
             await constants.connect()
 
-
         user = await interaction.client.fetch_user(int(entity_id))
         display_name = f"{user.mention}"
-
 
         async with constants.pool.acquire() as conn:
             
@@ -75,12 +68,11 @@ class AdminCommandsCog(commands.Cog):
                         description=f"{self.rift.error} You cannot blacklist another **Developer** or **Administrator**.",
                         color=self.rift.base_color,
                     )
-                    return await interaction.response.send_message(embed=embed, ephemeral=True)
+                    return await interaction.response.send_message(embed=embed)
 
 
         modal = BlacklistModal(self.rift, int(entity_id), display_name, blacklist_type)
         await interaction.response.send_modal(modal)
-        
         
         
     @app_commands.command(name="unblacklist")
@@ -120,7 +112,7 @@ class AdminCommandsCog(commands.Cog):
                         description=f"{self.rift.error} {display} is not actively blacklisted.",
                         color=self.rift.base_color,
                     )
-                    return await interaction.followup.send(embed=embed, ephemeral=True)
+                    return await interaction.followup.send(embed=embed)
 
 
                 if entity_type == "user":
@@ -159,7 +151,6 @@ class AdminCommandsCog(commands.Cog):
         await interaction.followup.send(embed=embed, ephemeral=True)
     
     
-    
     @commands.command()
     async def sync(self, ctx: RiftContext, guild_id: int = None):
         if guild_id:
@@ -168,7 +159,6 @@ class AdminCommandsCog(commands.Cog):
         else:
             synced = await self.rift.tree.sync()
         await ctx.send_success(f"Synced **{len(synced)}** commands.")
-
 
 
 async def setup(rift):
