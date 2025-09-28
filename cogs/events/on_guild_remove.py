@@ -7,7 +7,7 @@ from utils.embeds import OnGuildEmbed
 
 constants = RiftConstants()
 
-class OnGuildJoin(commands.Cog):
+class OnGuildRemove(commands.Cog):
     def __init__(self, rift):
         self.rift = rift
 
@@ -24,3 +24,6 @@ class OnGuildJoin(commands.Cog):
         )
 
         await channel.send(embed=embed)
+
+async def setup(rift):
+    await rift.add_cog(OnGuildRemove(rift))

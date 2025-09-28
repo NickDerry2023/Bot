@@ -24,3 +24,6 @@ class OnGuildJoin(commands.Cog):
         )
 
         await channel.send(embed=embed)
+
+async def setup(rift):
+    await rift.add_cog(OnGuildJoin(rift))
