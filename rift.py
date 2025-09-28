@@ -25,19 +25,12 @@ class Rift(commands.AutoShardedBot):
         super().__init__(**kwargs)
         self.token = None
         self.start_time = datetime.now()
-        self.beta_guilds = [
-            1175890904230408223,  # Nexure Solutions LLP Discord Server
-            1420889056174411898   # Rift Systems Discord Server
-        ]
-
         self.error = "<:RiftFail:1421378112339312742>"
         self.success = "<:RiftSuccess:1421378019167309888>"
         self.loading = "<:RiftLoading:1421377775549546599>"
         self.warning = "<:RiftWarning:1421378257378345041>"
         self.base_color = 0x89ffbc
         self.context = RiftContext
-
-        # prefix cache {guild_id: prefix}
         self.prefixes = {}
 
 

@@ -118,7 +118,7 @@ class Roblox(commands.Cog):
             dl = avatar_data.get("data") or []
             avatar_url = (dl[0].get("imageUrl") if dl else "") or ""
 
-        return RobloxUserEmbed.create(
+        embed = RobloxUserEmbed.create(
             user_id=user_id,
             username=username,
             created=created,
@@ -128,6 +128,18 @@ class Roblox(commands.Cog):
             groups=groups_count,
             avatar_url=avatar_url or None,
         )
+
+        view = discord.ui.View()
+        profile_url = f"https://www.roblox.com/users/{user_id}/profile"
+        view.add_item(
+            discord.ui.Button(
+                label="View Profile",
+                url=profile_url,
+                style=discord.ButtonStyle.link
+            )
+        )
+
+        return embed, view
 
 
     @commands.hybrid_command(
@@ -153,14 +165,14 @@ class Roblox(commands.Cog):
                 return await ctx.send_error("Could not find that Roblox user.")
             return await ctx.send(embed=fail_embed)
 
+        embed, view = await self.build_embed(user_id)
 
-        embed = await self.build_embed(user_id)
-        
-        
+
+
         if embed:
             if ctx.interaction and not ctx.interaction.response.is_done():
-                return await ctx.interaction.response.send_message(embed=embed)
-            return await ctx.send(embed=embed)
+                return await ctx.interaction.response.send_message(embed=embed, view=view)
+            return await ctx.send(embed=embed, view=view)
 
         err_embed = discord.Embed(
             description="<:RiftFail:1421378112339312742> Failed to fetch Roblox profile.",
