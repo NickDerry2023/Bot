@@ -44,6 +44,21 @@ class AdminCommandsCog(commands.Cog):
         view = GuildPaginator(ctx, guilds)
         await view.send()
 
+    @commands.command()
+    async def guildinvite(self, ctx: RiftContext, guild_id: int):
+        guild = ctx.rift.get_guild(guild_id)
+        if not guild:
+            return await ctx.send_error("I am not in that guild.")
+        invite = None
+        for channel in guild.text_channels:
+            try:
+                invite = await channel.create_invite(max_age=300, max_uses=1, unique=True)
+                break
+            except Exception:
+                continue
+        if not invite:
+            return await ctx.send_error("I could not create an invite for that guild.")
+        await ctx.send_success(f"Here is a temporary invite to **{guild.name}**: {invite.url}")
 
     @app_commands.command(name="blacklist")
     async def blacklist(self, interaction: discord.Interaction, entity_id: str, blacklist_type: str):
