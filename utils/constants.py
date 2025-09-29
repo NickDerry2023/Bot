@@ -5,17 +5,16 @@ import random
 import string
 from dotenv import load_dotenv
 
-
 load_dotenv()
-
 
 class RiftConstants:
     def __init__(self):
         self.pool: aiomysql.Pool | None = None
         self.bypassed_users: list[int] = []
         self.blacklists: list[dict] = []
+        self.blacklisted_user_ids: set[int] = set()
         self.server_blacklists: list[int] = []
-        
+        self.blacklisted_guild_ids: set[int] = set()
         
         
     async def connect(self):
@@ -31,6 +30,14 @@ class RiftConstants:
             )
 
 
+    async def ping_db(self) -> None:
+        if not self.pool:
+            await self.connect()
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT 1")
+                await cur.fetchone()
+
 
     async def close(self):
         if self.pool:
@@ -39,13 +46,10 @@ class RiftConstants:
             self.pool = None
 
 
-
     async def fetch_bypassed_users(self):
-        
         
         if not self.pool:
             await self.connect()
-            
             
         try:
             async with self.pool.acquire() as conn:
@@ -53,11 +57,9 @@ class RiftConstants:
                     await cur.execute("SELECT discord_id FROM blacklist_bypass")
                     rows = await cur.fetchall()
                     self.bypassed_users = [row["discord_id"] for row in rows]
-                    
-                    
+                         
         except Exception as e:
             print(f"[DB] Error fetching bypassed users: {e}")
-
 
 
     async def is_owner(self, user_id: int) -> bool:
@@ -137,6 +139,16 @@ class RiftConstants:
         block1 = ''.join(random.choices(string.digits, k=7))
         block2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
         return f"RFT-{block1}-{block2}"
+    
+    
+    @staticmethod
+    def _to_int(value) -> int | None:
+        if value is None:
+            return None
+        if isinstance(value, int):
+            return value
+        s = str(value).strip()
+        return int(s) if s.isdigit() else None
 
 
     def rift_token_setup(self):
@@ -165,16 +177,7 @@ class RiftConstants:
 
     def rift_environment_type(self):
         return os.getenv("ENVIRONMENT", "Development")
-
-
-    def __init__(self):
-        self.pool: aiomysql.Pool | None = None
-        self.bypassed_users: list[int] = []
-        self.blacklists: list[dict] = []
-        self.blacklisted_user_ids: set[int] = set()
-        self.server_blacklists: list[int] = []
-        self.blacklisted_guild_ids: set[int] = set()
-
+    
 
     async def fetch_blacklisted_users(self):
         
@@ -212,9 +215,9 @@ class RiftConstants:
         try:
             async with self.pool.acquire() as conn:
                 async with conn.cursor(aiomysql.DictCursor) as cur:
-                    await cur.execute("SELECT discord_id FROM server_blacklists")
+                    await cur.execute("SELECT guild_id FROM blacklists")
                     rows = await cur.fetchall()
-                    self.server_blacklists = [int(r["discord_id"]) for r in rows]
+                    self.server_blacklists = [self._to_int(r.get("guild_id")) for r in rows]
                     self.blacklisted_guild_ids = set(self.server_blacklists)
                     
                     

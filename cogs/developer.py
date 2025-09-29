@@ -94,7 +94,7 @@ class AdminCommandsCog(commands.Cog):
     async def unblacklist(self, interaction: Interaction, entity_id: str):
         
         
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer(ephemeral=False)
 
 
         if not constants.pool:
@@ -163,7 +163,7 @@ class AdminCommandsCog(commands.Cog):
         )
         
         
-        await interaction.followup.send(embed=embed, ephemeral=True)
+        await interaction.followup.send(embed=embed, ephemeral=False)
     
     
     @commands.command()

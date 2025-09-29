@@ -60,8 +60,8 @@ async def process_blacklist_db(data: dict):
                 await cur.execute(
                     """
                     INSERT INTO blacklists
-                    (discord_id, blacklist_title, blacklist_description, blacklist_type, blacklist_date, blacklist_updated_date, blacklist_status)
-                    VALUES (%s, %s, %s, %s, NOW(), NOW(), 'Active')
+                    (discord_id, guild_id, blacklist_title, blacklist_description, blacklist_type, blacklist_date, blacklist_updated_date, blacklist_status)
+                    VALUES (%s, '', %s, %s, %s, NOW(), NOW(), 'Active')
                     """,
                     (data["entity_id"], data["title"], data["description"], data["btype"])
                 )

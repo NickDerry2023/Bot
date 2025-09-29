@@ -1,3 +1,5 @@
+# This file is incomplete.
+
 
 import discordfrom discord.ext import commands
 from discord import app_commands
