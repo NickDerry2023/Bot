@@ -406,7 +406,7 @@ class UserInformationEmbed:
             "hypesquad_balance": "> <:sbHypeSquadBalance:1421716836658970716> HypeSquad Balance",
             "verified_bot": "> <:sbVerified:1421717217703104603> Verified Bot",
             "early_supporter": "> <:staff:1421718058019323978> Early Supporter",
-            "active_developer": "> <:verified:1421716168074330273> Active Developer",
+            "active_developer": "> <:ActiveDeveloper:1422234997850505356> Active Developer",
         }
 
         for flag, badge in badge_map.items():
