@@ -340,7 +340,7 @@ class UserInformationEmbed:
 
             staff_roles = [1421718175338205256]  # Staff Role
 
-            # Check for Rift Team role first
+            # Check for Rift Team, Rift Development, Rift Management, and Rift Support Team roles first
             
             if any(
                 discord.utils.get(guild_member.roles, id=role_id)
@@ -348,9 +348,35 @@ class UserInformationEmbed:
             ):
                 badges.append("> <:riftsystems:1421319259472003212> Rift Team")
 
-            # Check for staff roles second
+            if any(
+                discord.utils.get(guild_member.roles, id=role_id)
+                for role_id in [1421267174991069244]
+            ):
+                badges.append("> <:riftsystems:1421319259472003212> Rift Development")
+
+            if any(
+                discord.utils.get(guild_member.roles, id=role_id)
+                for role_id in [1421278574685720576]
+            ):
+                badges.append("> <:riftsystems:1421319259472003212> Rift Management")
+
+            if any(
+                discord.utils.get(guild_member.roles, id=role_id)
+                for role_id in [1421279252451561564]
+            ):
+                badges.append("> <:riftsystems:1421319259472003212> Rift Support Team")
+
+            if any(
+                discord.utils.get(guild_member.roles, id=role_id)
+                for role_id in [1421278534734839849]
+            ):
+                badges.append("> <:Notable:1421908258129580115> Rift Quality Assurance"
+            )
+
+            # Check for staff role second
             
-            if any(discord.utils.get(guild_member.roles, id=role_id)for role_id in staff_roles):
+            if any(discord.utils.get(guild_member.roles, id=role_id)
+                for role_id in staff_roles):
                 badges.append("> <:riftsystems:1421319259472003212> Rift Staff")
 
             # Check for Notable role third
