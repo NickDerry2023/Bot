@@ -370,7 +370,7 @@ class UserInformationEmbed:
                 discord.utils.get(guild_member.roles, id=role_id)
                 for role_id in [1421278534734839849]
             ):
-                badges.append("> <:Notable:1421908258129580115> Rift Quality Assurance"
+                badges.append("> <:riftsystems:1421319259472003212> Rift Quality Assurance"
             )
 
             # Check for staff role second
