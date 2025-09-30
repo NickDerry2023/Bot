@@ -19,12 +19,10 @@ from utils.pagination import PingPaginationView
 from utils.utils import RiftContext
 from utils.modals import AddUserModal
 
-
 constants = RiftConstants()
 
 CONTROL_GUILD_ID = 1420889056174411898
-CONTROL_ROLE_IDS  = [1421267029960167614, 1421279981220135024]
-
+CONTROL_ROLE_IDS = [1421267029960167614, 1421279981220135024]
 
 async def is_panel_admin(discord_id: int) -> bool:
     if not constants.pool:
