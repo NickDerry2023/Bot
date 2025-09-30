@@ -190,7 +190,7 @@ class PingCommandEmbed:
     @staticmethod
     def create_ping_embed(
         latency: float,
-        database_latency: int,
+        database_connected: bool,
         uptime,
         shard_info: List[dict],
         page: int = 0,
@@ -205,7 +205,7 @@ class PingCommandEmbed:
                 name="<:settings:1421385210167033979> **Network Information**",
                 value=(
                     f"> **Latency:** `{round(latency * 1000)}ms` \n"
-                    f"> **Database:** `{'Connected' if database_latency else 'Disconnected'}`\n"
+                    f"> **Database:** `{'Connected' if database_connected else 'Disconnected'}`\n"
                     f"> **Uptime:** <t:{int(uptime.timestamp())}:R>"
                 ),
                 inline=False,

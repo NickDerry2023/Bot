@@ -195,20 +195,6 @@ class ManagementCommandCog(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command(name="nick", description="Change/clear the nickname of a user", with_app_command=True, extras={"category": "General"},)
-    @commands.has_permissions(manage_nicknames=True)
-    async def nick(self, ctx: RiftContext, member: discord.Member, *, nickname: Optional[str] = None):
-        try:
-            await member.edit(nick=nickname)
-            if nickname:
-                await ctx.send_success(f"Changed nickname for {member.mention} to **{nickname}**")
-            else:
-                await ctx.send_success(f"Cleared nickname for {member.mention}")
-        except discord.Forbidden:
-            await ctx.send_error("I do not have permission to change that user's nickname.")
-        except Exception as e:
-            await ctx.send_error(f"An error occurred: {str(e)}")
-
 
 async def setup(strive):
     await strive.add_cog(ManagementCommandCog(strive))

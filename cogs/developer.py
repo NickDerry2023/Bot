@@ -1,9 +1,11 @@
+import re
 import discord
 import time
 import aiomysql
 from discord import app_commands, Interaction
 from discord.ui import View, Button
 from discord.ext import commands
+from discord.app_commands import Choice
 from utils.constants import RiftConstants, blacklists
 from utils.utils import RiftContext
 from utils.modals import BlacklistModal
@@ -21,7 +23,7 @@ async def is_panel_admin(discord_id: int) -> bool:
     async with constants.pool.acquire() as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
             await cur.execute(
-                "SELECT id FROM users WHERE oauth_id=%s AND accessLevel='Developer'",
+                "SELECT id FROM users WHERE oauth_id=%s AND access_level='Developer'",
                 (discord_id,),
             )
             row = await cur.fetchone()
@@ -44,6 +46,7 @@ class AdminCommandsCog(commands.Cog):
         view = GuildPaginator(ctx, guilds)
         await view.send()
 
+
     @commands.command()
     async def guildinvite(self, ctx: RiftContext, guild_id: int):
         guild = ctx.rift.get_guild(guild_id)
@@ -60,67 +63,83 @@ class AdminCommandsCog(commands.Cog):
             return await ctx.send_error("I could not create an invite for that guild.")
         await ctx.send_success(f"Here is a temporary invite to **{guild.name}**: {invite.url}")
 
-    @app_commands.command(name="blacklist")
-    async def blacklist(self, interaction: discord.Interaction, entity_id: str, blacklist_type: str):
-        if not constants.pool:
-            await constants.connect()
 
-        user = await interaction.client.fetch_user(int(entity_id))
-        display_name = f"{user.mention}"
+    @app_commands.command(name="blacklist", description="Blacklist a user or a guild.")
+    @app_commands.describe(entity_id="User ID (snowflake) or Guild ID (string of digits)", target_type="Choose whether you're blacklisting a user or a guild")
+    @app_commands.choices(target_type=[Choice(name="User", value="user"), Choice(name="Guild", value="guild"),])
+    async def blacklist(self, interaction: discord.Interaction, entity_id: str, target_type: Choice[str]):
 
-        async with constants.pool.acquire() as conn:
-            
-            async with conn.cursor(aiomysql.DictCursor) as cur:
-                await cur.execute(
-                    "SELECT access_level FROM users WHERE oauth_id=%s",
-                    (user.id,)
-                )
-                
-                row = await cur.fetchone()
+        target = target_type.value
+        display_name = None
+        blacklist_type=target.capitalize()
+        
+        if target == "user":
+            try:
+                user = await interaction.client.fetch_user(int(entity_id))
+                display_name = user.mention
+            except Exception:
+                display_name = f"User `{entity_id}`"
 
-                if row and row.get("access_level") == "Developer":
+            try:
+                uid = int(entity_id)
+                if await self._is_developer(uid):
                     embed = discord.Embed(
                         description=f"{self.rift.error} You cannot blacklist another **Developer** or **Administrator**.",
                         color=self.rift.base_color,
                     )
-                    return await interaction.response.send_message(embed=embed)
+                    return await interaction.response.send_message(embed=embed, ephemeral=True)
+            except ValueError:
+                embed = discord.Embed(
+                    description=f"{self.rift.error} `{entity_id}` is not a valid user ID.",
+                    color=self.rift.base_color,
+                )
+                return await interaction.response.send_message(embed=embed, ephemeral=True)
 
+        else:
+            try:
+                g = interaction.client.get_guild(int(entity_id))
+                display_name = f"**{g.name}** (`{g.id}`)" if g else f"Guild `{entity_id}`"
+            except ValueError:
+                embed = discord.Embed(
+                    description=f"{self.rift.error} `{entity_id}` is not a valid guild ID.",
+                    color=self.rift.base_color,
+                )
+                return await interaction.response.send_message(embed=embed, ephemeral=True)
 
-        modal = BlacklistModal(self.rift, int(entity_id), display_name, blacklist_type)
+        modal = BlacklistModal(
+            self.rift,
+            entity_id=entity_id,
+            entity_display=display_name,
+            btype=blacklist_type,
+            entity_type=target
+        )
+        
         await interaction.response.send_modal(modal)
         
         
     @app_commands.command(name="unblacklist")
     async def unblacklist(self, interaction: Interaction, entity_id: str):
         
-        
         await interaction.response.defer(ephemeral=False)
-
 
         if not constants.pool:
             await constants.connect()
 
-
         try:
             entity_user = await self.rift.fetch_user(int(entity_id))
             entity_type, entity_id_int, display = "user", entity_user.id, entity_user.mention
-            
-            
         except Exception:
             entity_type, entity_id_int, display = "guild", entity_id, f"Guild `{entity_id}`"
-
 
         async with constants.pool.acquire() as conn:
             
             async with conn.cursor(aiomysql.DictCursor) as cur:
                 await cur.execute(
-                    "SELECT * FROM blacklists WHERE discord_id=%s",
-                    (entity_id_int)
+                    "SELECT * FROM blacklists WHERE (discord_id = %s OR guild_id = %s) AND blacklist_status='Active' LIMIT 1",
+                    (entity_id_int, entity_id_int)
                 )
                 
-                
                 row = await cur.fetchone()
-
 
                 if not row:
                     embed = discord.Embed(
@@ -128,7 +147,6 @@ class AdminCommandsCog(commands.Cog):
                         color=self.rift.base_color,
                     )
                     return await interaction.followup.send(embed=embed)
-
 
                 if entity_type == "user":
                     await cur.execute("SELECT username FROM users WHERE oauth_id=%s", (entity_id_int,))
@@ -149,19 +167,17 @@ class AdminCommandsCog(commands.Cog):
                     UPDATE blacklists
                     SET blacklist_status='Cleared',
                         blacklist_updated_date=NOW()
-                    WHERE discord_id=%s AND blacklist_status='Active'
+                    WHERE (discord_id = %s OR guild_id = %s) AND blacklist_status='Active'
                     """,
-                    (entity_id_int)
+                    (entity_id_int, entity_id_int)
                 )
 
             await conn.commit()
-
 
         embed = discord.Embed(
             description=f"{self.rift.success} **{display}** has been **unblacklisted**.",
             color=self.rift.base_color,
         )
-        
         
         await interaction.followup.send(embed=embed, ephemeral=False)
     
@@ -173,7 +189,7 @@ class AdminCommandsCog(commands.Cog):
             synced = await self.rift.tree.sync(guild=guild)
         else:
             synced = await self.rift.tree.sync()
-        await ctx.send_success(f"Synced **{len(synced)}** commands.")
+        await ctx.send_success(f"Synced **{len(synced)}** commands.")        
 
 
 async def setup(rift):

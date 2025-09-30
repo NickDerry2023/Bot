@@ -1,6 +1,7 @@
 import os
 import discord
 import aiomysql
+import asyncio
 import random
 import string
 from dotenv import load_dotenv
@@ -15,6 +16,7 @@ class RiftConstants:
         self.blacklisted_user_ids: set[int] = set()
         self.server_blacklists: list[int] = []
         self.blacklisted_guild_ids: set[int] = set()
+        self._connect_lock = asyncio.Lock()
         
         
     async def connect(self):
@@ -30,13 +32,19 @@ class RiftConstants:
             )
 
 
-    async def ping_db(self) -> None:
-        if not self.pool:
+    async def is_db_connected(self) -> bool:
+        if not self.pool or self.pool.closed:
             await self.connect()
-        async with self.pool.acquire() as conn:
-            async with conn.cursor() as cur:
-                await cur.execute("SELECT 1")
-                await cur.fetchone()
+            
+        conn = await self.pool.acquire()
+        
+        try:
+            await conn.ping(reconnect=True)
+            return True
+        except Exception:
+            return False
+        finally:
+            self.pool.release(conn)
 
 
     async def close(self):
@@ -215,7 +223,7 @@ class RiftConstants:
         try:
             async with self.pool.acquire() as conn:
                 async with conn.cursor(aiomysql.DictCursor) as cur:
-                    await cur.execute("SELECT guild_id FROM blacklists")
+                    await cur.execute("SELECT guild_id FROM blacklists WHERE blacklist_status = 'Active'")
                     rows = await cur.fetchall()
                     self.server_blacklists = [self._to_int(r.get("guild_id")) for r in rows]
                     self.blacklisted_guild_ids = set(self.server_blacklists)
