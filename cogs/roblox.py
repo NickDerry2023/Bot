@@ -1,3 +1,8 @@
+# ==========================================================================================================
+# This file is for roblox related operation such as looking up roblox users, performing in-game roblox
+# operation as well as verification operations with Roblox OAuth.
+# ==========================================================================================================
+
 import discord
 import aiohttp
 import asyncio

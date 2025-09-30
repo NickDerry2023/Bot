@@ -1,3 +1,7 @@
+# ==========================================================================================================
+# This file is for developer only commands such as dev_add and dev_remove as well as sync and some others.
+# ==========================================================================================================
+
 import re
 import discord
 import time
@@ -13,12 +17,13 @@ from utils.pagination import GuildPaginator
 
 constants = RiftConstants()
 
+CONTROL_GUILD_ID = 1420889056174411898
+CONTROL_ROLE_IDS = [1421267029960167614, 1421279981220135024]
+
 async def is_panel_admin(discord_id: int) -> bool:
-    
     
     if not constants.pool:
         await constants.connect()
-        
         
     async with constants.pool.acquire() as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
@@ -28,6 +33,11 @@ async def is_panel_admin(discord_id: int) -> bool:
             )
             row = await cur.fetchone()
             return bool(row)
+        
+        
+def has_any_control_role(member: discord.Member) -> bool:
+    user_role_ids = {r.id for r in member.roles}
+    return any(rid in user_role_ids for rid in CONTROL_ROLE_IDS)
 
 
 class AdminCommandsCog(commands.Cog):
@@ -190,6 +200,187 @@ class AdminCommandsCog(commands.Cog):
         else:
             synced = await self.rift.tree.sync()
         await ctx.send_success(f"Synced **{len(synced)}** commands.")        
+        
+        
+    @commands.command()
+    @commands.guild_only()
+    async def dev_add(self, ctx: RiftContext, target: discord.User):
+        if not ctx.guild or ctx.guild.id != CONTROL_GUILD_ID:
+            return await ctx.send_error("This command can only be used in the **Rift Systems** guild.")
+        
+        if not any(ctx.guild.get_role(rid) for rid in CONTROL_ROLE_IDS):
+            roles_list = " ".join(f"<@&{rid}>" for rid in CONTROL_ROLE_IDS)
+            return await ctx.send_error(
+                f"None of the configured control roles exist in this guild. Expected one of: {roles_list}"
+            )
+
+        if not has_any_control_role(ctx.author):
+            roles_list = " ".join(f"<@&{rid}>" for rid in CONTROL_ROLE_IDS)
+            return await ctx.send_error(
+                f"You don't have a required role to use this command. You need one of: {roles_list}"
+            )
+        
+        if not await is_panel_admin(ctx.author.id):
+            return await ctx.send_error("You don't have panel admin permissions.")
+
+        target_id = target.id
+        display = target.mention
+
+        if not constants.pool:
+            await constants.connect()
+
+        async with constants.pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                
+                await cur.execute("SELECT id, access_level FROM users WHERE oauth_id=%s", (target_id,))
+                row = await cur.fetchone()
+                
+                if not row:
+                    return await ctx.send_error(f"{display} does not exist in the `users` table (oauth_id={target_id}).")
+
+                if (row.get("access_level") or "").lower() == "developer":
+                    return await ctx.send_success(f"{display} is already a **Developer**.")
+
+                await cur.execute(
+                    "UPDATE users SET access_level='Developer' WHERE oauth_id=%s",
+                    (target_id,)
+                )
+                
+            await conn.commit()
+
+        await ctx.send_success(f"Granted **Developer** access to {display}.")
+
+
+    @commands.command()
+    @commands.guild_only()
+    async def dev_remove(self, ctx: RiftContext, target: discord.User):
+        
+        if not ctx.guild or ctx.guild.id != CONTROL_GUILD_ID:
+            return await ctx.send_error("This command can only be used in the control guild.")
+        
+        if not any(ctx.guild.get_role(rid) for rid in CONTROL_ROLE_IDS):
+            roles_list = " ".join(f"<@&{rid}>" for rid in CONTROL_ROLE_IDS)
+            return await ctx.send_error(
+                f"None of the configured control roles exist in this guild. Expected one of: {roles_list}"
+            )
+
+        if not has_any_control_role(ctx.author):
+            roles_list = " ".join(f"<@&{rid}>" for rid in CONTROL_ROLE_IDS)
+            return await ctx.send_error(
+                f"You don't have a required role to use this command. You need one of: {roles_list}"
+            )
+        
+        if not await is_panel_admin(ctx.author.id):
+            return await ctx.send_error("You don't have panel admin permissions.")
+
+        target_id = target.id
+        display = target.mention
+
+        if not constants.pool:
+            await constants.connect()
+
+        async with constants.pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                await cur.execute("SELECT id, access_level FROM users WHERE oauth_id=%s", (target_id,))
+                
+                row = await cur.fetchone()
+                
+                if not row:
+                    return await ctx.send_error(f"{display} does not exist in the `users` table (oauth_id={target_id}).")
+
+                if (row.get("access_level") or "").lower() != "developer":
+                    return await ctx.send_success(f"{display} is not a **Developer**.")
+
+                await cur.execute(
+                    "UPDATE users SET access_level='User' WHERE oauth_id=%s",
+                    (target_id,)
+                )
+            await conn.commit()
+
+        await ctx.send_success(f"Revoked **Developer** access from {display} (set to **User**).")
+        
+        
+    @commands.hybrid_group(name="panel", with_app_command=True, description="This command group will allow you to add user to the panel and remove users from the panel.")
+    async def panel(self, ctx: RiftContext):
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_error("Use a subcommand: `/panel add` or `/panel remove`.")
+        
+    
+    @panel.command(name="add", description="Creates a panel user for the target.")
+    async def panel_add_user(self, ctx: RiftContext, target: discord.User):
+        
+        if not ctx.guild or ctx.guild.id != CONTROL_GUILD_ID:
+            return await ctx.send_error("This command can only be used in the control guild.")
+        
+        if not any(ctx.guild.get_role(rid) for rid in CONTROL_ROLE_IDS):
+            roles_list = " ".join(f"<@&{rid}>" for rid in CONTROL_ROLE_IDS)
+            return await ctx.send_error(
+                f"None of the configured control roles exist in this guild. Expected one of: {roles_list}"
+            )
+
+        if not has_any_control_role(ctx.author):
+            roles_list = " ".join(f"<@&{rid}>" for rid in CONTROL_ROLE_IDS)
+            return await ctx.send_error(
+                f"You don't have a required role to use this command. You need one of: {roles_list}"
+            )
+        
+        if not await is_panel_admin(ctx.author.id):
+            return await ctx.send_error("You don't have panel admin permissions.")
+        
+        if ctx.interaction is None:
+            return await ctx.send_error("Use the **slash** command `/panel add` to open the modal.")
+        
+        modal = AddUserModal(target_user_id=target.id)
+        await ctx.interaction.response.send_modal(modal)
+
+
+    @panel.command(name="remove", description="Removes a panel user for the target")
+    async def panel_remove_user(self, ctx: RiftContext, target: discord.User):
+        
+        if not ctx.guild or ctx.guild.id != CONTROL_GUILD_ID:
+            return await ctx.send_error("This command can only be used in the control guild.")
+        
+        if not any(ctx.guild.get_role(rid) for rid in CONTROL_ROLE_IDS):
+            roles_list = " ".join(f"<@&{rid}>" for rid in CONTROL_ROLE_IDS)
+            return await ctx.send_error(
+                f"None of the configured control roles exist in this guild. Expected one of: {roles_list}"
+            )
+
+        if not has_any_control_role(ctx.author):
+            roles_list = " ".join(f"<@&{rid}>" for rid in CONTROL_ROLE_IDS)
+            return await ctx.send_error(
+                f"You don't have a required role to use this command. You need one of: {roles_list}"
+            )
+        
+        if not await is_panel_admin(ctx.author.id):
+            return await ctx.send_error("You don't have panel admin permissions.")
+        
+        target_id = target.id
+        display = target.mention
+
+        if not constants.pool:
+            await constants.connect()
+
+        async with constants.pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                await cur.execute("SELECT id FROM users WHERE oauth_id=%s", (target_id,))
+                row = await cur.fetchone()
+                if not row:
+                    return await ctx.send_error(f"{display} does not exist in the `users` table (oauth_id={target_id}).")
+
+                await cur.execute(
+                    """
+                    UPDATE users
+                    SET status='Terminated',
+                        status_reason='Removed by admin',
+                        status_date=CURDATE()
+                    WHERE oauth_id=%s
+                    """,
+                    (target_id,)
+                )
+            await conn.commit()
+
+        await ctx.send_success(f"Marked **{display}** as **Terminated**.")
 
 
 async def setup(rift):

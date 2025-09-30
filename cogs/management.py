@@ -1,3 +1,9 @@
+# ==========================================================================================================
+# This file is for commands that have to do with management services such as server management or user
+# management, for example viewing or altering user information. Running lookups on Discord users, linking,
+# unlinking and editing server link for in-game servers or even Discord servers.
+# ==========================================================================================================
+
 import discord
 import aiomysql
 from typing import Literal, Dict, Optional, Callable, Awaitable
@@ -5,6 +11,7 @@ from discord.ext import commands
 from utils.constants import RiftConstants
 from utils.utils import RiftContext
 from utils.embeds import UserInformationEmbed
+from utils.modals import AddUserModal
 
 constants = RiftConstants()
 SocialPlatformType = Literal["Twitter", "Instagram", "Snapchat", "Youtube", "GitHub", "TikTok"]
@@ -196,5 +203,5 @@ class ManagementCommandCog(commands.Cog):
         await ctx.send(embed=embed)
 
 
-async def setup(strive):
-    await strive.add_cog(ManagementCommandCog(strive))
+async def setup(rift):
+    await rift.add_cog(ManagementCommandCog(rift))

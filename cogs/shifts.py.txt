@@ -1,3 +1,10 @@
+# ==========================================================================================================
+# This file is for shift related settings or as from our dirrivative software duty commands, for example
+# shift manage, which allow you to start, stop, or take a break while working with shifts, this will also
+# hold the shift leaderboard commands and all other shift operations, The software that this project dirrived
+# from orginally called it duty, and had duty manage, this would be similar.
+# ==========================================================================================================
+
 # This file is incomplete.
 
 
